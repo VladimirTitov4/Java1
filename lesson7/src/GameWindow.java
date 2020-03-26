@@ -13,15 +13,27 @@ public class GameWindow extends JFrame {
     private static Image catImage;
     private static Image plateImage;
     private static Image feedImage;
-    private static float ovalRight = 0;
-    private static float ovalLeft = 0;
+    private static Image addImage;
+    private static Image resetImage;
+    private static float feedRight = 0;
+    private static float feedBottom = 0;
+    private static float addRight = 0;
+    private static float resetRight = 0;
+    private static int feedImageX = 260;
+    private static int addImageX = 360;
+    private static int resetImageX = 460;
+    private static int imageY = 450;
+    private static Plate plate = new Plate(0);
+    private static Cat[] catsArray = Lesson7.getCats();
 
     public static void main(String[] args) throws IOException {
+
         background = ImageIO.read(GameWindow.class.getResourceAsStream("back.jpg"));
         catImage = ImageIO.read(GameWindow.class.getResourceAsStream("11.png"));
         plateImage = ImageIO.read(GameWindow.class.getResourceAsStream("plate.png"));
         feedImage = ImageIO.read(GameWindow.class.getResourceAsStream("feed.png"));
-
+        addImage = ImageIO.read(GameWindow.class.getResourceAsStream("add.png"));
+        resetImage = ImageIO.read(GameWindow.class.getResourceAsStream("reset.png"));
 
         game_window = new GameWindow();
         game_window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -35,67 +47,100 @@ public class GameWindow extends JFrame {
             public void mousePressed(MouseEvent e) {
                 int x = e.getX();
                 int y = e.getY();
-
-
+                feedRight = feedImageX + feedImage.getWidth(null);
+                feedBottom = imageY + feedImage.getHeight(null);
+                boolean isFeed = x >= feedImageX && x <= feedRight && y >= imageY && y <= feedBottom;
+                for (Cat cat : catsArray) {
+                    if (isFeed && !cat.isFull()) {
+                        if (plate.getFood() > cat.getAppetite()) {
+                            cat.eat(plate);
+                        }
+                        game_field.repaint();
+                    }
+                }
             }
         });
+
+        game_field.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int x = e.getX();
+                int y = e.getY();
+                addRight = addImageX + feedImage.getWidth(null);
+                feedBottom = imageY + feedImage.getHeight(null);
+                boolean isAdd = x >= addImageX && x <= addRight && y >= imageY && y <= feedBottom;
+                if (isAdd) {
+                    plate.increaseFood();
+                    game_field.repaint();
+                }
+            }
+        });
+
+        game_field.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int x = e.getX();
+                int y = e.getY();
+                resetRight = resetImageX + feedImage.getWidth(null);
+                feedBottom = imageY + feedImage.getHeight(null);
+                boolean isReset = x >= resetImageX && x <= resetRight && y >= imageY && y <= feedBottom;
+                if (isReset) {
+                    plate.setFood(100);
+
+                    for (Cat cat : catsArray) {
+                        cat.resetAppetite();
+                    }
+
+                    game_field.repaint();
+                }
+            }
+        });
+
         game_window.add(game_field);
         game_window.setVisible(true);
     }
 
-    private static void onRepaint(Graphics g) {
+    private static void paintBaseObjects(Graphics g) {
         g.drawImage(background, 0, 0, null);
         g.drawImage(catImage, 50, 50, null);
         g.drawImage(catImage, 50, 350, null);
         g.drawImage(catImage, 570, 50, null);
         g.drawImage(catImage, 570, 350, null);
         g.drawImage(plateImage, 335, 230, null);
-        g.drawImage(feedImage, 500, 230, null);
+        g.drawImage(feedImage, feedImageX, imageY, null);
+        g.drawImage(addImage, addImageX, imageY, null);
+        g.drawImage(resetImage, resetImageX, imageY, null);
         g.setColor(Color.white);
-        g.drawRect(85, 210, 100, 20);
-        g.drawRect(110, 510, 45, 20);
-        g.drawRect(632, 210, 40, 20);
-        g.drawRect(620, 510, 75, 20);
-        g.setColor(Color.green);
-        g.drawOval(260,450,75,75);
-        g.fillOval(260,450,75,75);
-        g.setColor(Color.yellow);
-        g.drawOval(360,450,75,75);
-        g.fillOval(360,450,75,75);
-        g.setColor(Color.red);
-        g.drawOval(460,450,75,75);
-        g.fillOval(460,450,75,75);
-        g.setColor(Color.black);
-        Font font = new Font("Verdana", Font.PLAIN, 20);
-        g.setFont(font);
-        g.drawString("Feed", 272, 493);
-        g.drawString("Add", 375, 493);
-        g.drawString("Reset", 470, 493);
 
+        for (Cat cat : catsArray) {
+            g.drawRect(cat.xRect, cat.yRect, cat.getAppetite()*10, 20);
+        }
     }
 
     private static class GameField extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            onRepaint(g);
+            paintBaseObjects(g);
+            plate.paint(g);
+
+            for (Cat cat : catsArray) {
+                if (cat.isFull()) cat.paint(g);
+            }
+
             repaint();
-            text();
         }
     }
+}
 
-    public static void text() {
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout());
-
-        JPanel htmlPanel = new JPanel();
-        String text = "<html><h3>Feed</h3></html>";
-        Font font = new Font("Verdana", Font.PLAIN, 12);
-        JLabel htmlLabel = new JLabel();
-        htmlLabel.setText(text);
-        htmlLabel.setFont(font);
-        htmlPanel.add(htmlLabel);
-
-        mainPanel.add(htmlPanel, BorderLayout.SOUTH);
+class Lesson7 {
+    public static Cat[] getCats() {
+        return new Cat[]{
+                new Cat("Cat1", 10, 85, 210),
+                new Cat("Cat2", 4, 110, 510),
+                new Cat("Cat3", 5, 632, 210),
+                new Cat("Cat4", 7, 620, 510)
+        };
     }
 }
+
